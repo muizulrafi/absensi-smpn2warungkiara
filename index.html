@@ -7,14 +7,33 @@
   <title>Sistem Absensi QR - SMPN 2 Warungkiara</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/html5-qrcode"></script>
-  <!-- Pustaka pembaca Excel (SheetJS) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
     .card-custom { border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: none; }
     #reader { width: 100%; border-radius: 12px; overflow: hidden; background: #000; min-height: 250px; }
+    .table-matrix th, .table-matrix td { font-size: 0.75rem; text-align: center; vertical-align: middle; padding: 4px; white-space: nowrap; }
     .id-card { width: 220px; height: 330px; border: 2px solid #0d6efd; border-radius: 10px; background: #fff; padding: 12px; text-align: center; display: inline-block; margin: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); page-break-inside: avoid; }
-    @media print { body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; } #printArea { position: absolute; left: 0; top: 0; width: 100%; } }
+    
+    @media print {
+      body * { visibility: hidden; }
+      #printArea, #printArea * { visibility: visible; }
+      #printArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        border: none !important;
+        max-height: none !important;
+        overflow: visible !important;
+      }
+      .id-card {
+        box-shadow: none;
+        border: 1px solid #000;
+        margin: 5px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -33,7 +52,7 @@
       <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabScan">📱 Scan QR</button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabRekapUmum" onclick="loadData()">📊 Rekap Umum</button></li>
       <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle text-dark" data-bs-toggle="dropdown" href="#" role="button">🏫 Kelas</a>
+        <a class="nav-link dropdown-toggle text-dark" data-bs-toggle="dropdown" href="#" role="button">🏫 Menu Kelas (Matriks)</a>
         <ul class="dropdown-menu">
           <li><a class="dropdown-item" href="#" onclick="switchKelas('7A')">Kelas 7A</a></li>
           <li><a class="dropdown-item" href="#" onclick="switchKelas('7B')">Kelas 7B</a></li>
@@ -69,18 +88,10 @@
         </div>
       </div>
 
-      <!-- TAB 2: REKAP UMUM & PERIODE -->
+      <!-- TAB 2: REKAP UMUM -->
       <div class="tab-pane fade" id="tabRekapUmum">
         <div class="card card-custom p-3 bg-white">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="m-0">Rekapitulasi Absensi Keseluruhan</h5>
-            <div class="btn-group">
-              <button class="btn btn-sm btn-outline-primary active" onclick="filterPeriode('harian', this)">Harian</button>
-              <button class="btn btn-sm btn-outline-primary" onclick="filterPeriode('mingguan', this)">Mingguan</button>
-              <button class="btn btn-sm btn-outline-primary" onclick="filterPeriode('bulanan', this)">Bulanan</button>
-              <button class="btn btn-sm btn-outline-primary" onclick="filterPeriode('semester', this)">Semester</button>
-            </div>
-          </div>
+          <h5 class="mb-3">Rekapitulasi Harian Real-time</h5>
           <div class="table-responsive">
             <table class="table table-striped text-center align-middle" id="tableRekapUmum">
               <thead class="table-dark">
@@ -92,19 +103,27 @@
         </div>
       </div>
 
-      <!-- TAB 3: KELAS SPESIFIK & EDIT WALI KELAS -->
+      <!-- TAB 3: MENU KELAS MATRIKS BULANAN & SEMESTER -->
       <div class="tab-pane fade" id="tabKelas">
         <div class="card card-custom p-3 bg-white">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="text-primary m-0" id="titleKelasSpesifik">Pilih Kelas Terlebih Dahulu</h4>
-            <div id="badgeStatusWali" class="badge bg-secondary">Mode Umum (Read-Only)</div>
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h4 class="text-primary m-0" id="titleKelasSpesifik">Pilih Kelas di Menu Atas</h4>
+            <div class="d-flex align-items-center gap-2">
+              <select id="selectBulan" class="form-select form-select-sm" onchange="renderMatrixTable()">
+                <option value="0">Januari</option><option value="1">Februari</option><option value="2">Maret</option>
+                <option value="3">April</option><option value="4">Mei</option><option value="5">Juni</option>
+                <option value="6">Juli</option><option value="7">Agustus</option><option value="8">September</option>
+                <option value="9">Oktober</option><option value="10">November</option><option value="11">Desember</option>
+              </select>
+              <div id="badgeStatusWali" class="badge bg-secondary">Mode Umum (Read-Only)</div>
+            </div>
           </div>
-          <div class="table-responsive">
-            <table class="table table-bordered text-center align-middle" id="tableKelasDetail">
-              <thead class="table-primary">
-                <tr><th>No</th><th>NISN</th><th>NIS</th><th>Nama Siswa</th><th>Tanggal Hari Ini</th><th>Status Kehadiran</th></tr>
-              </thead>
-              <tbody><tr><td colspan="6" class="text-muted">Silakan pilih menu Kelas di atas.</td></tr></tbody>
+          <div class="table-responsive" style="max-height: 600px;">
+            <table class="table table-bordered table-matrix" id="tableMatrixKelas">
+              <thead class="table-primary" id="matrixHeader"></thead>
+              <tbody id="matrixBody">
+                <tr><td colspan="40" class="text-muted py-4">Silakan pilih kelas terlebih dahulu melalui menu dropdown di atas.</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -128,7 +147,7 @@
         </div>
       </div>
 
-      <!-- TAB 5: KELOLA SISWA & UPLOAD EXCEL / CETAK KARTU -->
+      <!-- TAB 5: KELOLA SISWA & KARTU -->
       <div class="tab-pane fade" id="tabKelola">
         <div class="row">
           <div class="col-md-5 mb-3">
@@ -144,38 +163,31 @@
               </select>
               <button class="btn btn-primary w-100" onclick="tambahSiswa()">Simpan Siswa</button>
             </div>
-
-            <!-- KOTAK UPLOAD & TEMPLATE EXCEL -->
             <div class="card card-custom p-3 bg-white">
               <h5 class="mb-2">Impor Data Siswa via Excel</h5>
-              <p class="text-muted small mb-3">Unduh template, isi datanya di Excel, lalu unggah ke sini.</p>
               <button class="btn btn-outline-success btn-sm w-100 mb-2" onclick="downloadTemplateExcel()">📥 Download Template Excel</button>
               <input type="file" id="excelFile" class="form-control form-control-sm mb-2" accept=".xlsx, .xls, .csv">
               <button class="btn btn-success w-100 btn-sm" onclick="uploadExcel()">🚀 Unggah & Proses Excel</button>
             </div>
           </div>
-
           <div class="col-md-7">
             <div class="card card-custom p-3 bg-white">
               <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="m-0">Cetak ID Card QR Kolektif</h5>
-                <button class="btn btn-sm btn-dark" onclick="window.print()">🖨️ Cetak Semua / PDF</button>
+                <button class="btn btn-sm btn-dark" onclick="window.print()">🖨️ Cetak Semua</button>
               </div>
-              <div class="mb-3">
-                <select id="filterCetakKelas" class="form-select" onchange="renderCards()">
-                  <option value="">-- Pilih Kelas untuk Dicetak --</option>
-                  <option value="7A">7A</option><option value="7B">7B</option><option value="7C">7C</option><option value="7D">7D</option>
-                  <option value="8A">8A</option><option value="8B">8B</option><option value="8C">8C</option><option value="8D">8D</option>
-                  <option value="9A">9A</option><option value="9B">9B</option><option value="9C">9C</option><option value="9D">9D</option>
-                </select>
-              </div>
-              <div id="printArea" class="text-center overflow-auto border p-2 rounded" style="max-height: 500px; background: #eef2f7;">
-                <span class="text-muted">Pilih kelas di atas untuk memuat pratinjau kartu.</span>
-              </div>
+              <select id="filterCetakKelas" class="form-select mb-3" onchange="renderCards()">
+                <option value="">-- Pilih Kelas untuk Dicetak --</option>
+                <option value="7A">7A</option><option value="7B">7B</option><option value="7C">7C</option><option value="7D">7D</option>
+                <option value="8A">8A</option><option value="8B">8B</option><option value="8C">8C</option><option value="8D">8D</option>
+                <option value="9A">9A</option><option value="9B">9B</option><option value="9C">9C</option><option value="9D">9D</option>
+              </select>
+              <div id="printArea" class="text-center overflow-auto border p-2 rounded" style="max-height: 450px; background: #eef2f7;"></div>
             </div>
           </div>
         </div>
       </div>
+
     </div>
   </div>
 
@@ -212,7 +224,7 @@
   <audio id="beep" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbw62ygvj3lgC6LNy_VnH-1Sgmk9wA08p-sePZyCLIRWG9RZO9Fo98DvKH6yd6ml44_r5A/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbwJOWGiHrZ_juLLXBDx4aq_yT8KEiR7c6yGUK-g6PRtWHykIhwJg3QY4LdEtTbQSHeoUw/exec";
 
     let globalData = { siswa: [], logs: [] };
     let currentRole = "UMUM";
@@ -224,6 +236,7 @@
     window.onload = function() {
       html5QrCode = new Html5Qrcode("reader");
       html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 220 }, onScanSuccess).catch(e=>{});
+      document.getElementById("selectBulan").value = new Date().getMonth();
       loadData();
     };
 
@@ -233,9 +246,8 @@
         .then(data => {
           globalData = data;
           renderRekapUmum(data.logs);
-          if(activeSelectedKelas) renderKelasDetail(activeSelectedKelas);
-        })
-        .catch(err => console.error("Gagal memuat data:", err));
+          if(activeSelectedKelas) renderMatrixTable();
+        });
     }
 
     function onScanSuccess(decodedText) {
@@ -243,10 +255,7 @@
       isProcessing = true;
       document.getElementById("beep").play().catch(e=>{});
 
-      fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "scan", nisn: decodedText })
-      })
+      fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "scan", nisn: decodedText }) })
       .then(res => res.json())
       .then(res => {
         let box = document.getElementById("scanResult");
@@ -257,10 +266,6 @@
         }
         setTimeout(() => { isProcessing = false; box.innerHTML = `<div class="alert alert-secondary">Kamera siap memindai...</div>`; }, 2500);
         loadData();
-      })
-      .catch(err => {
-        isProcessing = false;
-        alert("Terjadi kesalahan koneksi saat scan.");
       });
     }
 
@@ -276,107 +281,112 @@
       });
     }
 
-    function filterPeriode(periode, btn) {
-      document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      let logs = globalData.logs;
-      let now = new Date();
-      let filtered = logs;
-
-      if(periode === 'harian') {
-        let tglHariIni = now.toISOString().split('T')[0];
-        filtered = logs.filter(r => r[5].toString().startsWith(tglHariIni));
-      } else if(periode === 'mingguan') {
-        let sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(now.getDate() - 7);
-        filtered = logs.filter(r => new Date(r[5]) >= sevenDaysAgo);
-      } else if(periode === 'bulanan') {
-        let currentMonth = now.getMonth();
-        filtered = logs.filter(r => new Date(r[5]).getMonth() === currentMonth);
-      }
-      renderRekapUmum(filtered);
-    }
-
     function switchKelas(kelas) {
       activeSelectedKelas = kelas;
-      renderKelasDetail(kelas);
+      renderMatrixTable();
       let containerTab = document.createElement('div');
       containerTab.innerHTML = `<button class="nav-link active d-none" data-bs-toggle="pill" data-bs-target="#tabKelas" id="triggerKelasTab">Tab</button>`;
       document.body.appendChild(containerTab);
       new bootstrap.Tab(document.getElementById('triggerKelasTab')).show();
     }
 
-    function renderKelasDetail(kelas) {
-      document.getElementById("titleKelasSpesifik").innerText = "Rekap Absensi Kelas " + kelas;
-      let tbody = document.querySelector("#tableKelasDetail tbody");
+    function renderMatrixTable() {
+      if(!activeSelectedKelas) return;
+      let now = new Date();
+      let tahun = now.getFullYear();
+      let bulan = parseInt(document.getElementById("selectBulan").value);
+      
+      let jumlahHari = new Date(tahun, bulan + 1, 0).getDate();
+      let tglHariIni = now.toISOString().split('T')[0];
+
+      document.getElementById("titleKelasSpesifik").innerText = "Matriks Absensi Kelas " + activeSelectedKelas;
+      
+      let isWaliValid = (currentRole === "WALI" && activeWaliKelas === activeSelectedKelas);
+      let badgeWali = document.getElementById("badgeStatusWali");
+      badgeWali.className = isWaliValid ? "badge bg-success" : "badge bg-secondary";
+      badgeWali.innerText = isWaliValid ? "Mode Edit Aktif (Wali Kelas " + activeSelectedKelas + ")" : "Mode Umum (Read-Only)";
+
+      let headerTr = `<tr><th>No</th><th>NISN</th><th>Nama Lengkap</th>`;
+      for(let d = 1; d <= jumlahHari; d++) {
+        let tglCek = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        let isToday = (tglCek === tglHariIni);
+        let headerStyle = isToday ? "background-color: #ffc107 !important; color: #000;" : "";
+        headerTr += `<th style="${headerStyle}" title="${tglCek}">${d}</th>`;
+      }
+      headerTr += `<th class="bg-dark text-white">h</th><th class="bg-dark text-white">s</th><th class="bg-dark text-white">i</th><th class="bg-dark text-white">a</th><th class="bg-secondary text-white" title="Total Semester (S/I/A)">Sem</th></tr>`;
+      document.getElementById("matrixHeader").innerHTML = headerTr;
+
+      let siswaList = globalData.siswa.filter(s => s[3].toString().trim() === activeSelectedKelas);
+      let tbody = document.getElementById("matrixBody");
       tbody.innerHTML = "";
 
-      let siswaKelas = globalData.siswa.filter(s => s[3].toString().trim() === kelas);
-      let tglHariIni = new Date().toISOString().split('T')[0];
-
-      if(siswaKelas.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-muted">Tidak ada siswa di kelas ini.</td></tr>`;
+      if(siswaList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="${jumlahHari + 8}" class="text-muted py-3">Tidak ada data siswa di kelas ini.</td></tr>`;
         return;
       }
 
-      let isWaliValid = (currentRole === "WALI" && activeWaliKelas === kelas);
-      let badgeWali = document.getElementById("badgeStatusWali");
-      badgeWali.className = isWaliValid ? "badge bg-success" : "badge bg-secondary";
-      badgeWali.innerText = isWaliValid ? "Mode Edit Aktif (Wali Kelas " + kelas + ")" : "Mode Umum (Read-Only)";
+      siswaList.forEach((s, idx) => {
+        let nisn = s[0].toString().trim();
+        let nama = s[2];
 
-      siswaKelas.forEach((s, idx) => {
-        let nisn = s[0];
-        let logSiswa = globalData.logs.find(l => l[1].toString().trim() === nisn.toString().trim() && l[5].toString().startsWith(tglHariIni));
-        let statusKeadir = logSiswa ? logSiswa[8] : "Belum Scan";
+        let rowHtml = `<tr><td>${idx+1}</td><td>${nisn}</td><td class="text-start"><strong>${nama}</strong></td>`;
+        
+        let cH = 0, cS = 0, cI = 0, cA = 0;
+        let semS = 0, semI = 0, semA = 0;
 
-        let badgeStatusHtml = `<span class="badge bg-secondary">Belum Scan</span>`;
-        if(statusKeadir === "Hadir") badgeStatusHtml = `<span class="badge bg-success">✓ Hadir</span>`;
-        else if(statusKeadir === "Terlambat") badgeStatusHtml = `<span class="badge bg-warning text-dark">Terlambat</span>`;
-        else if(statusKeadir === "Sakit") badgeStatusHtml = `<span class="badge bg-info text-dark">S (Sakit)</span>`;
-        else if(statusKeadir === "Izin") badgeStatusHtml = `<span class="badge bg-primary">I (Izin)</span>`;
-        else if(statusKeadir === "Alfa") badgeStatusHtml = `<span class="badge bg-danger">A (Alfa)</span>`;
+        globalData.logs.forEach(l => {
+          if(l[1].toString().trim() === nisn) {
+            let st = l[8];
+            if(st === "Sakit") semS++;
+            if(st === "Izin") semI++;
+            if(st === "Alfa") semA++;
+          }
+        });
 
-        let actionCol = badgeStatusHtml;
-        if(isWaliValid) {
-          actionCol += `
-            <select class="form-select form-select-sm mt-1" onchange="ubahStatusWali('${nisn}', this.value)">
-              <option value="">Ubah Status...</option>
-              <option value="Hadir">Hadir</option>
-              <option value="Sakit">Sakit (S)</option>
-              <option value="Izin">Izin (I)</option>
-              <option value="Alfa">Alfa (A)</option>
-            </select>`;
+        for(let d = 1; d <= jumlahHari; d++) {
+          let tglStr = `${tahun}-${String(bulan + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          let isTodayCell = (tglStr === tglHariIni);
+          let cellBg = isTodayCell ? "background-color: #fff9db;" : "";
+          
+          let logHari = globalData.logs.find(l => l[1].toString().trim() === nisn && l[5].toString().startsWith(tglStr));
+          let statusText = logHari ? logHari[8] : "-";
+          
+          let simbol = "-";
+          let warnaBadge = "text-muted";
+          if(statusText === "Hadir" || statusText === "Terlambat") { simbol = "h"; warnaBadge = "text-success fw-bold"; cH++; }
+          else if(statusText === "Sakit") { simbol = "s"; warnaBadge = "text-info fw-bold"; cS++; }
+          else if(statusText === "Izin") { simbol = "i"; warnaBadge = "text-primary fw-bold"; cI++; }
+          else if(statusText === "Alfa") { simbol = "a"; warnaBadge = "text-danger fw-bold"; cA++; }
+
+          if(isWaliValid) {
+            rowHtml += `<td style="${cellBg}"><select class="form-select form-select-sm p-0 text-center ${warnaBadge}" style="width:38px; font-size:11px;" onchange="updateMatrixCell('${nisn}', '${tglStr}', this.value)">
+              <option value="-" ${simbol==='-'?'selected':''}>-</option>
+              <option value="Hadir" ${simbol==='h'?'selected':''}>h</option>
+              <option value="Sakit" ${simbol==='s'?'selected':''}>s</option>
+              <option value="Izin" ${simbol==='i'?'selected':''}>i</option>
+              <option value="Alfa" ${simbol==='a'?'selected':''}>a</option>
+            </select></td>`;
+          } else {
+            rowHtml += `<td style="${cellBg}" class="${warnaBadge}">${simbol}</td>`;
+          }
         }
 
-        tbody.innerHTML += `
-          <tr>
-            <td>${idx+1}</td>
-            <td>${s[0]}</td>
-            <td>${s[1]}</td>
-            <td><strong>${s[2]}</strong></td>
-            <td>${tglHariIni}</td>
-            <td>${actionCol}</td>
-          </tr>`;
+        rowHtml += `<td class="fw-bold bg-light">${cH}</td><td class="fw-bold bg-light">${cS}</td><td class="fw-bold bg-light">${cI}</td><td class="fw-bold bg-light">${cA}</td><td class="bg-secondary-subtle small">${semS}/${semI}/${semA}</td></tr>`;
+        tbody.innerHTML += rowHtml;
       });
     }
 
-    function ubahStatusWali(nisn, status) {
-      if(!status) return;
-      let tglHariIni = new Date().toISOString().split('T')[0];
+    function updateMatrixCell(nisn, tanggal, status) {
+      if(status === "-") return;
       fetch(API_URL, {
         method: "POST",
-        body: JSON.stringify({ action: "updateStatus", nisn: nisn, tanggal: tglHariIni, status: status })
+        body: JSON.stringify({ action: "updateMatrixStatus", nisn: nisn, tanggal: tanggal, status: status })
       })
       .then(res => res.json())
-      .then(res => {
-        alert(res.message);
-        loadData();
-      });
+      .then(res => { loadData(); });
     }
 
-    function openLoginModal() {
-      new bootstrap.Modal(document.getElementById('loginModal')).show();
-    }
+    function openLoginModal() { new bootstrap.Modal(document.getElementById('loginModal')).show(); }
 
     function prosesLoginWali() {
       let kelas = document.getElementById("loginKelasSelect").value;
@@ -392,7 +402,7 @@
         document.getElementById("btnLoginToggle").setAttribute("onclick", "logoutWali()");
         bootstrap.Modal.getInstance(document.getElementById('loginModal')).hide();
         alert("Berhasil login sebagai Wali Kelas " + kelas);
-        if(activeSelectedKelas === kelas) renderKelasDetail(kelas);
+        if(activeSelectedKelas === kelas) renderMatrixTable();
       } else {
         alert("PIN Salah! Format PIN untuk kelas " + kelas + " adalah: " + kelas.toLowerCase() + "123");
       }
@@ -405,7 +415,7 @@
       document.getElementById("roleBadge").innerText = "Mode: UMUM";
       document.getElementById("btnLoginToggle").innerText = "Login Wali Kelas";
       document.getElementById("btnLoginToggle").setAttribute("onclick", "openLoginModal()");
-      if(activeSelectedKelas) renderKelasDetail(activeSelectedKelas);
+      if(activeSelectedKelas) renderMatrixTable();
     }
 
     function loadPeringkat() {
@@ -443,7 +453,6 @@
       });
     }
 
-    // FITUR DOWNLOAD TEMPLATE EXCEL
     function downloadTemplateExcel() {
       let templateData = [
         ["NISN", "NIS", "Nama Lengkap", "Kelas"],
@@ -456,7 +465,6 @@
       XLSX.writeFile(wb, "Template_Data_Siswa_SMPN2Warungkiara.xlsx");
     }
 
-    // FITUR UPLOAD & PARSE FILE EXCEL
     function uploadExcel() {
       let fileInput = document.getElementById("excelFile");
       if(fileInput.files.length === 0) return alert("Pilih file Excel terlebih dahulu!");
@@ -469,19 +477,13 @@
         let workbook = XLSX.read(data, {type: 'array'});
         let firstSheetName = workbook.SheetNames[0];
         let worksheet = workbook.Sheets[firstSheetName];
-        
         let jsonRows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
         let cleanData = [];
 
         for(let i = 1; i < jsonRows.length; i++) {
           let row = jsonRows[i];
           if(row && row.length >= 3 && row[0] && row[2]) {
-            cleanData.push([
-              row[0].toString(), 
-              row[1] ? row[1].toString() : "-", 
-              row[2].toString(), 
-              row[3] ? row[3].toString() : "7A"
-            ]);
+            cleanData.push([row[0].toString(), row[1] ? row[1].toString() : "-", row[2].toString(), row[3] ? row[3].toString() : "7A"]);
           }
         }
 
@@ -498,7 +500,6 @@
           loadData();
         });
       };
-
       reader.readAsArrayBuffer(file);
     }
 
@@ -515,11 +516,8 @@
       }
 
       siswaList.forEach(s => {
-        let nisn = s[0];
-        let nis = s[1];
-        let nama = s[2];
+        let nisn = s[0], nis = s[1], nama = s[2];
         let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${nisn}`;
-
         area.innerHTML += `
           <div class="id-card">
             <div style="font-size:9px; font-weight:bold; color:#0d6efd; line-height:1.1;">KARTU MURID<br>SMP NEGERI 2 WARUNGKIARA</div>
