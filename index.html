@@ -1,28 +1,36 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+  <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Absensi QR - SMPN 2 Warungkiara</title>
+  <title>Absensi QR Code - SMPN 2 Warungkiara</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .card-custom { border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: none; }
-    #reader { width: 100%; border-radius: 15px; overflow: hidden; }
+    #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #000; min-height: 250px; }
+    .nav-pills .nav-link.active { background-color: #0d6efd; font-weight: bold; }
+    .badge-hadir { background-color: #198754; }
+    .badge-terlambat { background-color: #dc3545; }
+    .badge-izin { background-color: #ffc107; color: #000; }
+    .badge-alfa { background-color: #6c757d; }
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-dark bg-primary mb-3 shadow-sm">
-    <div class="container text-center">
-      <span class="navbar-brand font-weight-bold mx-auto">
-        <strong>SMPN 2 WARUNGKIARA</strong> | Absensi QR Code
-      </span>
+  <!-- NAVBAR HEADER -->
+  <nav class="navbar navbar-dark bg-primary mb-4 shadow-sm">
+    <div class="container">
+      <a class="navbar-brand font-weight-bold" href="#">
+        <strong>SMPN 2 WARUNGKIARA</strong> | Sistem Absensi QR
+      </a>
     </div>
   </nav>
 
   <div class="container pb-5">
-    <ul class="nav nav-pills mb-3 nav-justified bg-white p-2 rounded-3 shadow-sm" id="pills-tab" role="tablist">
+    <!-- MENU UTAMA -->
+    <ul class="nav nav-pills mb-4 nav-justified bg-white p-2 rounded-3 shadow-sm" id="pills-tab" role="tablist">
       <li class="nav-item">
         <button class="nav-link active" id="tab-scan" data-bs-toggle="pill" data-bs-target="#pills-scan">📱 Scan QR</button>
       </li>
@@ -35,159 +43,252 @@
       <li class="nav-item">
         <button class="nav-link" id="tab-siswa" data-bs-toggle="pill" data-bs-target="#pills-siswa">👤 Kelola Siswa</button>
       </li>
+      <li class="nav-item">
+        <button class="nav-link" id="tab-setting" data-bs-toggle="pill" data-bs-target="#pills-setting" onclick="initSettingsForm()">⚙️ Pengaturan Jam</button>
+      </li>
     </ul>
 
     <div class="tab-content" id="pills-tabContent">
-      <!-- TAB SCANNER KAMERA -->
+      
+      <!-- TAB 1: SCANNER HP GERBANG -->
       <div class="tab-pane fade show active" id="pills-scan">
         <div class="row justify-content-center">
           <div class="col-md-6 text-center">
             <div class="card card-custom p-3 bg-white">
-              <h6 class="mb-2 text-primary font-weight-bold">Arahkan Kartu QR Ke Kamera HP</h6>
+              <h5 class="mb-3 text-primary font-weight-bold">Arahkan Kartu QR Ke Kamera HP</h5>
               <div id="reader"></div>
               <div id="scan-result" class="mt-3">
-                <div class="alert alert-info py-2">Mempersiapkan Kamera HP...</div>
+                <div class="alert alert-secondary">Kamera siap memindai kartu siswa...</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- TAB REKAP -->
+      <!-- TAB 2: REKAPITULASI ABSENSI & EDIT WALI KELAS -->
       <div class="tab-pane fade" id="pills-rekap">
         <div class="card card-custom p-3 bg-white">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="m-0 font-weight-bold">Data Rekap Absensi</h6>
-            <select id="filterKelas" class="form-select w-auto form-select-sm" onchange="filterData()">
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+            <h5 class="m-0 font-weight-bold">Data Rekapitulasi Absensi</h5>
+            <select id="filterKelas" class="form-select w-auto" onchange="filterData()">
               <option value="">-- Semua Kelas --</option>
-              <option value="VII A">7A</option><option value="VII B">7B</option><option value="VII C">7C</option><option value="VII D">7D</option>
-              <option value="VIII A">8A</option><option value="VIII B">8B</option><option value="VIII C">8C</option><option value="VIII D">8D</option>
-              <option value="IX A">9A</option><option value="IX B">9B</option><option value="IX C">9C</option><option value="IX D">9D</option>
+              <option value="7A">Kelas 7A</option><option value="7B">Kelas 7B</option><option value="7C">Kelas 7C</option><option value="7D">Kelas 7D</option>
+              <option value="8A">Kelas 8A</option><option value="8B">Kelas 8B</option><option value="8C">Kelas 8C</option><option value="8D">Kelas 8D</option>
+              <option value="9A">Kelas 9A</option><option value="9B">Kelas 9B</option><option value="9C">Kelas 9C</option><option value="9D">Kelas 9D</option>
             </select>
           </div>
           <div class="table-responsive">
-            <table class="table table-striped text-center align-middle" id="tableRekap" style="font-size:0.85rem;">
+            <table class="table table-striped table-hover text-center align-middle" id="tableRekap">
               <thead class="table-dark">
-                <tr><th>No</th><th>NISN</th><th>Nama</th><th>Kelas</th><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Status</th><th>Edit Status</th></tr>
+                <tr>
+                  <th>No</th><th>NISN</th><th>Nama Siswa</th><th>Kelas</th><th>Tanggal</th><th>Masuk</th><th>Pulang</th><th>Status</th><th>Aksi (Wali Kelas)</th>
+                </tr>
               </thead>
-              <tbody><tr><td colspan="9">Memuat data...</td></tr></tbody>
+              <tbody>
+                <tr><td colspan="9">Memuat data...</td></tr>
+              </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- TAB PERINGKAT -->
+      <!-- TAB 3: LEADERBOARD PERINGKAT -->
       <div class="tab-pane fade" id="pills-rank">
         <div class="row">
           <div class="col-md-6 mb-3">
             <div class="card card-custom p-3 bg-white border-start border-success border-4">
-              <h6 class="text-success text-center font-weight-bold">🟢 SISWA PALING RAJIN</h6>
-              <ol id="listRajin" class="list-group list-group-numbered mt-2"></ol>
+              <h5 class="text-success text-center font-weight-bold">🟢 SISWA PALING RAJIN (PALING PAGI)</h5>
+              <ol id="listRajin" class="list-group list-group-numbered mt-3"></ol>
             </div>
           </div>
           <div class="col-md-6 mb-3">
             <div class="card card-custom p-3 bg-white border-start border-danger border-4">
-              <h6 class="text-danger text-center font-weight-bold">🔴 SISWA SERING TERLAMBAT</h6>
-              <ol id="listTerlambat" class="list-group list-group-numbered mt-2"></ol>
+              <h5 class="text-danger text-center font-weight-bold">🔴 SISWA SERING TERLAMBAT</h5>
+              <ol id="listTerlambat" class="list-group list-group-numbered mt-3"></ol>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- TAB KELOLA SISWA -->
+      <!-- TAB 4: KELOLA SISWA & CETAK ID CARD -->
       <div class="tab-pane fade" id="pills-siswa">
         <div class="row">
           <div class="col-md-5 mb-3">
             <div class="card card-custom p-3 bg-white">
-              <h6 class="mb-3 font-weight-bold">Tambah Siswa Baru</h6>
-              <input type="text" id="addNisn" class="form-control form-control-sm mb-2" placeholder="NISN">
-              <input type="text" id="addNis" class="form-control form-control-sm mb-2" placeholder="NIS">
-              <input type="text" id="addNama" class="form-control form-control-sm mb-2" placeholder="Nama Lengkap">
-              <select id="addKelas" class="form-select form-select-sm mb-3">
-                <option value="VII A">VII A</option><option value="VII B">VII B</option><option value="VII C">VII C</option><option value="VII D">VII D</option>
-                <option value="VIII A">VIII A</option><option value="VIII B">VIII B</option><option value="VIII C">VIII C</option><option value="VIII D">VIII D</option>
-                <option value="IX A">IX A</option><option value="IX B">IX B</option><option value="IX C">IX C</option><option value="IX D">IX D</option>
-              </select>
-              <button class="btn btn-primary btn-sm w-100" onclick="simpanSiswa()">Simpan Siswa</button>
+              <h5 class="mb-3">Tambah Siswa Baru</h5>
+              <div class="mb-2"><input type="text" id="addNisn" class="form-control" placeholder="NISN Siswa"></div>
+              <div class="mb-2"><input type="text" id="addNis" class="form-control" placeholder="NIS Siswa"></div>
+              <div class="mb-2"><input type="text" id="addNama" class="form-control" placeholder="Nama Lengkap"></div>
+              <div class="mb-3">
+                <select id="addKelas" class="form-select">
+                  <option value="7A">7A</option><option value="7B">7B</option><option value="7C">7C</option><option value="7D">7D</option>
+                  <option value="8A">8A</option><option value="8B">8B</option><option value="8C">8C</option><option value="8D">8D</option>
+                  <option value="9A">9A</option><option value="9B">9B</option><option value="9C">9C</option><option value="9D">9D</option>
+                </select>
+              </div>
+              <button class="btn btn-primary w-100" onclick="simpanSiswa()">+ Simpan Siswa Baru</button>
             </div>
           </div>
+
           <div class="col-md-7">
-            <div class="card card-custom p-3 bg-white text-center">
-              <h6 class="mb-2 font-weight-bold">Cetak Kartu QR Siswa</h6>
-              <input type="text" id="searchSiswaCard" class="form-control form-control-sm mb-3" placeholder="Ketik NISN Siswa..." onkeyup="previewCard()">
-              <div id="cardPreviewArea" class="d-flex justify-content-center"></div>
+            <div class="card card-custom p-3 bg-white">
+              <h5 class="mb-3">Pratinjau & Cetak Kartu ID QR</h5>
+              <input type="text" id="searchSiswaCard" class="form-control mb-3" placeholder="Ketik NISN Siswa untuk Generasi Kartu..." onkeyup="previewCard()">
+              <div id="cardPreviewArea" class="d-flex justify-content-center">
+                <div class="text-muted small">Ketik NISN siswa di atas untuk melihat desain kartu QR.</div>
+              </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: PENGATURAN JAM ABSENSI -->
+      <div class="tab-pane fade" id="pills-setting">
+        <div class="card card-custom p-4 bg-white mx-auto" style="max-width: 500px;">
+          <h5 class="mb-3 text-primary font-weight-bold">⚙️ Pengaturan Batas Waktu Absensi</h5>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold">Batas Maksimal Jam Masuk (Tepat Waktu):</label>
+            <input type="time" id="setJamMasuk" class="form-control" value="07:00">
+            <small class="text-muted">Lewat dari jam ini otomatis berstatus Terlambat.</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold">Jam Mulai Scan Pulang (Senin - Kamis):</label>
+            <input type="time" id="setJamPulangBiasa" class="form-control" value="12:00">
+            <small class="text-muted">Sebelum jam ini, siswa ditolak jika scan pulang.</small>
+          </div>
+          <div class="mb-3">
+            <label class="form-label font-weight-bold">Jam Mulai Scan Pulang (Khusus Hari Jumat):</label>
+            <input type="time" id="setJamPulangJumat" class="form-control" value="10:00">
+          </div>
+          <button class="btn btn-success w-100" onclick="saveSettings()">💾 Simpan Pengaturan Jam</button>
         </div>
       </div>
 
     </div>
   </div>
 
+  <!-- AUDIO NOTIFIKASI SUARA BEEP -->
   <audio id="beepSound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
   <script>
-    // GANTI TULISAN DI DALAM KUTIP INI DENGAN URL WEB APP APPS SCRIPT ANDA
-    const API_URL = "https://script.google.com/macros/s/AKfycbyUwWrGqxMo7-x-zfYKirzdoNOPW9vfVfFS1tmlstQ0T3gYII-XAZF6HI0qHUr-r6ioEw/exec";
+    // ⚠️ GANTI URL DI BAWAH INI DENGAN URL WEB APP GOOGLE APPS SCRIPT TERBARU ANDA
+    const API_URL = "https://script.google.com/macros/s/AKfycb.../exec";
 
-    let html5QrcodeScanner;
+    let html5QrCode;
     let isProcessing = false;
     let allLogs = [];
 
+    // INISIALISASI CAMERA SCANNER HP
     window.onload = function() {
-      html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } }, false);
-      html5QrcodeScanner.render(onScanSuccess);
+      html5QrCode = new Html5Qrcode("reader");
+      const config = { fps: 10, qrbox: { width: 220, height: 220 } };
+
+      Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+          let cameraId = devices[0].id;
+          for(let dev of devices) {
+            if(dev.label.toLowerCase().includes('back') || dev.label.toLowerCase().includes('environment')) {
+              cameraId = dev.id;
+              break;
+            }
+          }
+          html5QrCode.start(cameraId, config, onScanSuccess);
+        }
+      }).catch(err => {
+        document.getElementById("scan-result").innerHTML = `
+          <div class="alert alert-warning text-center">
+            <p class="mb-1">Izin Kamera Belum Diberikan.</p>
+            <button class="btn btn-sm btn-primary" onclick="location.reload()">Izinkan & Refresh</button>
+          </div>`;
+      });
     };
 
+    // PENGATURAN JAM PENYIMPANAN LOCALSTORAGE
+    function getSettings() {
+      return {
+        jamMasuk: localStorage.getItem("jamMasuk") || "07:00",
+        jamPulangBiasa: localStorage.getItem("jamPulangBiasa") || "12:00",
+        jamPulangJumat: localStorage.getItem("jamPulangJumat") || "10:00"
+      };
+    }
+
+    function initSettingsForm() {
+      let st = getSettings();
+      document.getElementById("setJamMasuk").value = st.jamMasuk;
+      document.getElementById("setJamPulangBiasa").value = st.jamPulangBiasa;
+      document.getElementById("setJamPulangJumat").value = st.jamPulangJumat;
+    }
+
+    function saveSettings() {
+      localStorage.setItem("jamMasuk", document.getElementById("setJamMasuk").value);
+      localStorage.setItem("jamPulangBiasa", document.getElementById("setJamPulangBiasa").value);
+      localStorage.setItem("jamPulangJumat", document.getElementById("setJamPulangJumat").value);
+      alert("Pengaturan jam absensi berhasil disimpan!");
+    }
+
+    // FUNGSI SAAT QR DITANGKAP KAMERA
     function onScanSuccess(decodedText) {
       if(isProcessing) return;
       isProcessing = true;
 
-      document.getElementById("beepSound").play().catch(e=>{});
-      document.getElementById("scan-result").innerHTML = `<div class="alert alert-info py-2">Memproses NISN: <strong>${decodedText}</strong>...</div>`;
+      let audio = document.getElementById("beepSound");
+      audio.play().catch(e => console.log(e));
+
+      document.getElementById("scan-result").innerHTML = `<div class="alert alert-info">Memproses NISN: <strong>${decodedText}</strong>...</div>`;
+
+      let payload = {
+        action: "scan",
+        nisn: decodedText,
+        settings: getSettings()
+      };
 
       fetch(API_URL, {
         method: "POST",
-        body: JSON.stringify({ action: "scan", nisn: decodedText })
+        body: JSON.stringify(payload)
       })
       .then(res => res.json())
       .then(res => {
         if(res.success) {
           let badgeClass = res.status === "Hadir" ? "bg-success" : "bg-danger";
           document.getElementById("scan-result").innerHTML = `
-            <div class="alert alert-success py-2">
-              <h6 class="m-0">✅ ${res.action} BERHASIL</h6>
-              <small><strong>${res.nama}</strong> (${res.kelas})</small><br>
+            <div class="alert alert-success">
+              <h5 class="m-0">✅ ${res.action} BERHASIL</h5>
+              <p class="mb-1"><strong>${res.nama}</strong> (${res.kelas})</p>
               <span class="badge ${badgeClass}">${res.status} - ${res.jam}</span>
             </div>`;
         } else {
-          document.getElementById("scan-result").innerHTML = `<div class="alert alert-danger py-2">❌ ${res.message}</div>`;
+          document.getElementById("scan-result").innerHTML = `<div class="alert alert-warning">⚠️ ${res.message}</div>`;
         }
-        setTimeout(() => {
-          isProcessing = false;
-          document.getElementById("scan-result").innerHTML = `<div class="alert alert-secondary py-2">Kamera siap memindai kartu berikutnya...</div>`;
+        
+        setTimeout(() => { 
+          isProcessing = false; 
+          document.getElementById("scan-result").innerHTML = `<div class="alert alert-secondary">Kamera siap memindai kartu berikutnya...</div>`;
         }, 2500);
       });
     }
 
+    // MEMUAT REKAP ABSENSI
     function loadRekap() {
       fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
-        allLogs = data.logs;
-        renderTable(allLogs);
-      });
+        .then(res => res.json())
+        .then(data => {
+          allLogs = data.logs;
+          renderTable(allLogs);
+        });
     }
 
     function renderTable(logs) {
       let tbody = document.querySelector("#tableRekap tbody");
       tbody.innerHTML = "";
-      if(!logs || logs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-muted">Belum ada data.</td></tr>`;
+      
+      if(logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-muted">Belum ada data absensi.</td></tr>`;
         return;
       }
+
       logs.forEach((row, idx) => {
+        let statusBadge = getStatusBadge(row[8]);
         tbody.innerHTML += `
           <tr>
             <td>${idx+1}</td>
@@ -197,14 +298,14 @@
             <td>${row[5]}</td>
             <td>${row[6]}</td>
             <td>${row[7]}</td>
-            <td><span class="badge bg-primary">${row[8]}</span></td>
+            <td><span class="badge ${statusBadge}">${row[8]}</span></td>
             <td>
               <select class="form-select form-select-sm" onchange="editStatus('${row[1]}', '${row[5]}', this.value)">
-                <option value="">Edit</option>
+                <option value="">Edit Status</option>
                 <option value="Hadir">Hadir</option>
-                <option value="Sakit">Sakit</option>
-                <option value="Izin">Izin</option>
-                <option value="Alfa">Alfa</option>
+                <option value="Sakit">Sakit (S)</option>
+                <option value="Izin">Izin (I)</option>
+                <option value="Alfa">Alfa (A)</option>
                 <option value="Terlambat">Terlambat</option>
               </select>
             </td>
@@ -213,72 +314,96 @@
     }
 
     function filterData() {
-      let k = document.getElementById("filterKelas").value;
-      renderTable(!k ? allLogs : allLogs.filter(r => r[4] === k));
+      let selectedKelas = document.getElementById("filterKelas").value;
+      if(!selectedKelas) {
+        renderTable(allLogs);
+      } else {
+        let filtered = allLogs.filter(row => row[4] === selectedKelas);
+        renderTable(filtered);
+      }
+    }
+
+    function getStatusBadge(st) {
+      if(st === 'Hadir') return 'badge-hadir';
+      if(st === 'Terlambat') return 'badge-terlambat';
+      if(st === 'Sakit' || st === 'Izin') return 'badge-izin';
+      return 'badge-alfa';
     }
 
     function editStatus(nisn, tgl, status) {
       if(!status) return;
-      fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "updateStatus", nisn: nisn, tanggal: tgl, status: status })
-      })
-      .then(res => res.json())
-      .then(res => {
-        alert(res.message);
-        loadRekap();
-      });
+      let payload = { action: "updateStatus", nisn: nisn, tanggal: tgl, status: status };
+      fetch(API_URL, { method: "POST", body: JSON.stringify(payload) })
+        .then(res => res.json())
+        .then(res => {
+          alert(res.message);
+          loadRekap();
+        });
     }
 
+    // MEMUAT LEADERBOARD PERINGKAT
     function loadRank() {
       fetch(API_URL)
-      .then(res => res.json())
-      .then(data => {
-        let logs = data.logs;
-        let cRajin = {}, cLate = {};
-        logs.forEach(row => {
-          let nama = row[3] + " (" + row[4] + ")";
-          if(row[8] === 'Hadir') cRajin[nama] = (cRajin[nama]||0)+1;
-          if(row[8] === 'Terlambat') cLate[nama] = (cLate[nama]||0)+1;
+        .then(res => res.json())
+        .then(data => {
+          let logs = data.logs;
+          let countRajin = {};
+          let countTerlambat = {};
+
+          logs.forEach(row => {
+            let nama = row[3] + " (" + row[4] + ")";
+            let status = row[8];
+            if(status === 'Hadir') {
+              countRajin[nama] = (countRajin[nama] || 0) + 1;
+            } else if(status === 'Terlambat') {
+              countTerlambat[nama] = (countTerlambat[nama] || 0) + 1;
+            }
+          });
+
+          let sortedRajin = Object.keys(countRajin).sort((a,b) => countRajin[b] - countRajin[a]);
+          let sortedTerlambat = Object.keys(countTerlambat).sort((a,b) => countTerlambat[b] - countTerlambat[a]);
+
+          document.getElementById("listRajin").innerHTML = sortedRajin.slice(0, 5).map(n => `<li class="list-group-item d-flex justify-content-between align-items-center">${n} <span class="badge bg-success rounded-pill">${countRajin[n]} Hari</span></li>`).join('') || '<li class="list-group-item">Belum ada data.</li>';
+          
+          document.getElementById("listTerlambat").innerHTML = sortedTerlambat.slice(0, 5).map(n => `<li class="list-group-item d-flex justify-content-between align-items-center">${n} <span class="badge bg-danger rounded-pill">${countTerlambat[n]} Kali</span></li>`).join('') || '<li class="list-group-item">Belum ada data.</li>';
         });
-
-        let sRajin = Object.keys(cRajin).sort((a,b)=>cRajin[b]-cRajin[a]);
-        let sLate = Object.keys(cLate).sort((a,b)=>cLate[b]-cLate[a]);
-
-        document.getElementById("listRajin").innerHTML = sRajin.slice(0,5).map(n=>`<li class="list-group-item d-flex justify-content-between align-items-center">${n} <span class="badge bg-success rounded-pill">${cRajin[n]} Hari</span></li>`).join('') || '<li class="list-group-item">Belum ada data</li>';
-        document.getElementById("listTerlambat").innerHTML = sLate.slice(0,5).map(n=>`<li class="list-group-item d-flex justify-content-between align-items-center">${n} <span class="badge bg-danger rounded-pill">${cLate[n]} Kali</span></li>`).join('') || '<li class="list-group-item">Belum ada data</li>';
-      });
     }
 
+    // SIMPAN SISWA BARU
     function simpanSiswa() {
       let nisn = document.getElementById("addNisn").value;
       let nis = document.getElementById("addNis").value;
       let nama = document.getElementById("addNama").value;
       let kelas = document.getElementById("addKelas").value;
 
-      if(!nisn || !nama) return alert("NISN dan Nama Wajib diisi!");
+      if(!nisn || !nama) {
+        alert("NISN dan Nama Siswa wajib diisi!");
+        return;
+      }
 
-      fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "addSiswa", nisn: nisn, nis: nis, nama: nama, kelas: kelas })
-      })
-      .then(res => res.json())
-      .then(res => {
-        alert(res.message);
-        document.getElementById("addNisn").value = "";
-        document.getElementById("addNama").value = "";
-      });
+      let payload = { action: "addSiswa", nisn: nisn, nis: nis, nama: nama, kelas: kelas };
+      fetch(API_URL, { method: "POST", body: JSON.stringify(payload) })
+        .then(res => res.json())
+        .then(res => {
+          alert(res.message);
+          document.getElementById("addNisn").value = "";
+          document.getElementById("addNis").value = "";
+          document.getElementById("addNama").value = "";
+        });
     }
 
+    // PREVIEW KARTU SISWA & QR CODE
     function previewCard() {
       let nisn = document.getElementById("searchSiswaCard").value.trim();
       if(!nisn) return;
       let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${nisn}`;
       document.getElementById("cardPreviewArea").innerHTML = `
-        <div class="card p-3 text-center border-primary shadow-sm" style="width: 220px; border-radius: 15px;">
-          <small class="fw-bold text-primary">SMPN 2 WARUNGKIARA</small>
-          <img src="${qrUrl}" class="img-fluid mx-auto my-2" style="width:120px;">
-          <small class="fw-bold">${nisn}</small>
+        <div class="card p-3 text-center border-primary shadow-sm" style="width: 250px; border-radius: 15px;">
+          <h6 class="m-0 font-weight-bold text-primary">SMPN 2 WARUNGKIARA</h6>
+          <small class="text-muted">KARTU PELAJAR</small>
+          <hr class="my-2">
+          <img src="${qrUrl}" class="img-fluid mx-auto my-2" style="width:130px;">
+          <h6 class="mb-0 font-weight-bold">${nisn}</h6>
         </div>`;
     }
   </script>
