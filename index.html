@@ -32,7 +32,7 @@
       <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabRekapUmum" onclick="loadData()">📊 Rekap Umum</button></li>
       <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle text-dark" data-bs-toggle="dropdown" href="#" role="button">🏫 Kelas</a>
-        <ul class="dropdown-menu" id="kelasDropdownMenu">
+        <ul class="dropdown-menu">
           <li><a class="dropdown-item" href="#" onclick="switchKelas('7A')">Kelas 7A</a></li>
           <li><a class="dropdown-item" href="#" onclick="switchKelas('7B')">Kelas 7B</a></li>
           <li><a class="dropdown-item" href="#" onclick="switchKelas('7C')">Kelas 7C</a></li>
@@ -73,10 +73,10 @@
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="m-0">Rekapitulasi Absensi Keseluruhan</h5>
             <div class="btn-group">
-              <button class="btn btn-sm btn-outline-primary active" onclick="filterPeriode('harian')">Harian</button>
-              <button class="btn btn-sm btn-outline-primary" onclick="filterPeriode('mingguan')">Mingguan</button>
-              <button class="btn btn-sm btn-outline-primary" onclick="filterPeriode('bulanan')">Bulanan</button>
-              <button class="btn btn-sm btn-outline-primary" onclick="filterPeriode('semester')">Semester</button>
+              <button class="btn btn-sm btn-outline-primary active" onclick="filterPeriode('harian', this)">Harian</button>
+              <button class="btn btn-sm btn-outline-primary" onclick="filterPeriode('mingguan', this)">Mingguan</button>
+              <button class="btn btn-sm btn-outline-primary" onclick="filterPeriode('bulanan', this)">Bulanan</button>
+              <button class="btn btn-sm btn-outline-primary" onclick="filterPeriode('semester', this)">Semester</button>
             </div>
           </div>
           <div class="table-responsive">
@@ -258,20 +258,43 @@
       });
     }
 
+    function filterPeriode(periode, btn) {
+      document.querySelectorAll('.btn-group .btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      let logs = globalData.logs;
+      let now = new Date();
+      let filtered = logs;
+
+      if(periode === 'harian') {
+        let tglHariIni = now.toISOString().split('T')[0];
+        filtered = logs.filter(r => r[5].toString().startsWith(tglHariIni));
+      } else if(periode === 'mingguan') {
+        let sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(now.getDate() - 7);
+        filtered = logs.filter(r => new Date(r[5]) >= sevenDaysAgo);
+      } else if(periode === 'bulanan') {
+        let currentMonth = now.getMonth();
+        filtered = logs.filter(r => new Date(r[5]).getMonth() === currentMonth);
+      }
+      renderRekapUmum(filtered);
+    }
+
     function switchKelas(kelas) {
       activeSelectedKelas = kelas;
-      // Pindah tab ke tabKelas secara programmatically
-      let tabEl = document.querySelector('button[data-bs-target="#tabKelas"]');
-      if(!tabEl) {
-        // Buat tab dinamis jika belum ada di navbar
-        let li = document.createElement('li');
-        li.className = 'nav-item';
-        li.innerHTML = `<button class="nav-link active d-none" data-bs-toggle="pill" data-bs-target="#tabKelas" id="hiddenTabKelasBtn">Kelas</button>`;
-        document.getElementById('mainTab').appendChild(li);
+      // Buat tab dinamis kelas jika belum aktif di view
+      let tabPane = document.getElementById("tabKelas");
+      if(!tabPane.classList.contains("active")) {
+        let bsTab = new bootstrap.Tab(document.querySelector('button[data-bs-target="#tabScan"]')); 
       }
-      var bsTab = new bootstrap.Tab(document.querySelector('button[data-bs-target="#tabKelas"]') || document.getElementById('hiddenTabKelasBtn'));
-      bsTab.show();
+      // Langsung tampilkan view kelas via DOM manipulation / simulasi klik tersembunyi
       renderKelasDetail(kelas);
+      
+      // Paksa aktifkan tab lewat bootstrap trigger manual
+      let containerTab = document.createElement('div');
+      containerTab.innerHTML = `<button class="nav-link active d-none" data-bs-toggle="pill" data-bs-target="#tabKelas" id="triggerKelasTab">Tab</button>`;
+      document.body.appendChild(containerTab);
+      new bootstrap.Tab(document.getElementById('triggerKelasTab')).show();
     }
 
     function renderKelasDetail(kelas) {
@@ -288,15 +311,16 @@
       }
 
       let isWaliValid = (currentRole === "WALI" && activeWaliKelas === kelas);
-      document.getElementById("badgeStatusWali").className = isWaliValid ? "badge bg-success" : "badge bg-secondary";
-      document.getElementById("badgeStatusWali").innerText = isWaliValid ? "Mode Edit Aktif (Wali Kelas " + kelas + ")" : "Mode Umum (Read-Only)";
+      let badgeWali = document.getElementById("badgeStatusWali");
+      badgeWali.className = isWaliValid ? "badge bg-success" : "badge bg-secondary";
+      badgeWali.innerText = isWaliValid ? "Mode Edit Aktif (Wali Kelas " + kelas + ")" : "Mode Umum (Read-Only)";
 
       siswaKelas.forEach((s, idx) => {
         let nisn = s[0];
         let logSiswa = globalData.logs.find(l => l[1].toString().trim() === nisn.toString().trim() && l[5].toString().startsWith(tglHariIni));
         let statusKeadir = logSiswa ? logSiswa[8] : "Belum Scan";
 
-        let badgeStatusHtml = `<span class="badge bg-secondary">${statusKeadir}</span>`;
+        let badgeStatusHtml = `<span class="badge bg-secondary">Belum Scan</span>`;
         if(statusKeadir === "Hadir") badgeStatusHtml = `<span class="badge bg-success">✓ Hadir</span>`;
         else if(statusKeadir === "Terlambat") badgeStatusHtml = `<span class="badge bg-warning text-dark">Terlambat</span>`;
         else if(statusKeadir === "Sakit") badgeStatusHtml = `<span class="badge bg-info text-dark">S (Sakit)</span>`;
@@ -433,10 +457,6 @@
             <div style="font-size:9px; color:#555;">NIS: ${nis} | Kelas: ${kelas}</div>
           </div>`;
       });
-    }
-
-    function filterPeriode(p) {
-      alert("Menampilkan filter rekap periode: " + p.toUpperCase());
     }
   </script>
 </body>
