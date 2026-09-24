@@ -86,7 +86,7 @@
               <div class="mb-3">
                 <label for="cameraSelect" class="form-label small fw-bold text-muted mb-1">Pilih Kamera:</label>
                 <select id="cameraSelect" class="form-select form-select-sm" onchange="changeCamera()">
-                  <!-- Opsi kamera akan diisi otomatis oleh skrip -->
+                  <!-- Opsi kamera diterjemahkan ke bahasa Indonesia -->
                 </select>
               </div>
 
@@ -246,19 +246,29 @@
     window.onload = function() {
       html5QrCode = new Html5Qrcode("reader");
       
-      // Deteksi daftar kamera yang tersedia di perangkat
       Html5Qrcode.getCameras().then(devices => {
         if (devices && devices.length) {
           let select = document.getElementById("cameraSelect");
           select.innerHTML = "";
-          devices.forEach(device => {
+          devices.forEach((device, index) => {
             let option = document.createElement("option");
             option.value = device.id;
-            option.text = device.label || `Kamera ${select.length + 1}`;
+            
+            let label = device.label || `Kamera ${index + 1}`;
+            // Terjemahkan otomatis label bawaan browser ke Bahasa Indonesia
+            let lowerLabel = label.toLowerCase();
+            if (lowerLabel.includes("front") || lowerLabel.includes("depan")) {
+              label = `Kamera Depan (${index + 1})`;
+            } else if (lowerLabel.includes("back") || lowerLabel.includes("rear") || lowerLabel.includes("belakang") || lowerLabel.includes("environment") || lowerLabel.includes("wide") || lowerLabel.includes("ultra")) {
+              label = `Kamera Belakang (${index + 1})`;
+            } else {
+              label = `Kamera ${index + 1} (${label})`;
+            }
+
+            option.text = label;
             select.appendChild(option);
           });
           
-          // Pilih kamera belakang secara default jika ada, atau kamera pertama
           currentCameraId = devices[devices.length - 1].id;
           select.value = currentCameraId;
           startScanner(currentCameraId);
@@ -267,7 +277,6 @@
         }
       }).catch(err => {
         console.error("Gagal mendeteksi kamera: ", err);
-        // Fallback ke environment jika gagal mendeteksi perangkat secara spesifik
         html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 220 }, onScanSuccess).catch(e=>{});
       });
 
